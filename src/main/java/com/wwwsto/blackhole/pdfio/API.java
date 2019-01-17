@@ -1,14 +1,22 @@
 package com.wwwsto.blackhole.pdfio;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -22,6 +30,25 @@ public interface API {
         String content = stripper.getText(pdDoc);
         pdDoc.close();
         return content;
+	}
+	
+	default String createPDF(String content,String filename) throws IOException {
+		PDDocument pdDoc = new PDDocument();
+		PDPage page  = new PDPage();
+        pdDoc.addPage(page);
+        PDPageContentStream contentStream = new PDPageContentStream(pdDoc, page);
+        PDFont font = PDType1Font.HELVETICA_BOLD;
+        int x=100,y=700;
+        contentStream.beginText();
+        contentStream.setFont( font, 12 );
+    	contentStream.moveTextPositionByAmount( x, y );
+    	contentStream.drawString(content+100);
+        contentStream.endText();
+        // Make sure that the content stream is closed:
+        contentStream.close();
+        pdDoc.save(new File(filename));
+        pdDoc.close();
+        return "";
 	}
 	
 	default int saveAsImage(String filename, String imagename) throws InvalidPasswordException, IOException {
@@ -76,15 +103,6 @@ public interface API {
 		return 0;
 	}
 	
-	default int createPDF(String filename, String pdfname) throws InvalidPasswordException, IOException {
-		
-		File file = new File(filename);
-        PDDocument pdDoc = PDDocument.load(file);
-        
-        pdDoc.save(new File(pdfname));
-        pdDoc.close();
-        return 0;
-	}
 	
 	default int signPDF(String filename, String pdfname) throws InvalidPasswordException, IOException {
 		
